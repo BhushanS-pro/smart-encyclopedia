@@ -20,7 +20,16 @@ export default function Root({ children }: { children: React.ReactNode }) {
 
         {/* Using raw CSS styles as an escape-hatch to ensure the background color never flickers in dark-mode. */}
         <style dangerouslySetInnerHTML={{ __html: responsiveBackground }} />
-        {/* Add any additional <head> elements that you want globally available on web... */}
+        {/*
+          Add any additional <head> elements that you want globally available on web.
+          Google AdSense script (replace the `ca-pub-REPLACE_WITH_YOUR_PUBID` with your publisher id).
+          Keep this tag only on web builds. It's async and uses `crossOrigin="anonymous"` as recommended.
+        */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-REPLACE_WITH_YOUR_PUBID"
+          crossOrigin="anonymous"
+        ></script>
       </head>
       <body>{children}</body>
     </html>
