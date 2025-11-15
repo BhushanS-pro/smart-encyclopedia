@@ -54,6 +54,7 @@ export default function ArticleScreen() {
         }
       } catch (err) {
         if (isActive) {
+          console.error('Failed to load article:', decodedTitle, err);
           setError('We could not load this entry right now. Please try again later.');
         }
       } finally {
