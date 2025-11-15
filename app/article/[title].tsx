@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import DummyAd from '@/components/DummyAd';
+import { Pressable } from 'react-native';
 import { useColorScheme } from '@/components/useColorScheme';
 import { EncyclopediaEntry, getEncyclopediaEntry } from '@/lib/wiki';
 
@@ -30,6 +31,7 @@ export default function ArticleScreen() {
   const [entry, setEntry] = useState<EncyclopediaEntry | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastErrorDetail, setLastErrorDetail] = useState<string | null>(null);
 
   useEffect(() => {
     navigation.setOptions({ title: decodedTitle || 'Encyclopedia Entry' });
@@ -38,7 +40,7 @@ export default function ArticleScreen() {
   useEffect(() => {
     let isActive = true;
 
-    const loadEntry = async () => {
+      const loadEntry = async () => {
       if (!decodedTitle) {
         setError('Missing article title.');
         return;
@@ -46,6 +48,7 @@ export default function ArticleScreen() {
 
       setIsLoading(true);
       setError(null);
+      setLastErrorDetail(null);
       try {
         const data = await getEncyclopediaEntry(decodedTitle);
         if (isActive) {
@@ -54,8 +57,10 @@ export default function ArticleScreen() {
         }
       } catch (err) {
         if (isActive) {
-          console.error('Failed to load article:', decodedTitle, err);
-          setError('We could not load this entry right now. Please try again later.');
+            console.error('Failed to load article:', decodedTitle, err);
+            const message = err instanceof Error ? err.message : String(err);
+            setLastErrorDetail(message);
+            setError(`We could not load this entry right now. (${message})`);
         }
       } finally {
         if (isActive) {
@@ -84,6 +89,35 @@ export default function ArticleScreen() {
     return (
       <View style={[styles.centered, { backgroundColor: isDark ? '#020617' : '#f8fafc' }]}>
         <Text style={[styles.errorText, { color: isDark ? '#fca5a5' : '#b91c1c' }]}>{error}</Text>
+        {lastErrorDetail ? (
+          <Text style={{ marginTop: 8, color: isDark ? '#cbd5f5' : '#475569', fontSize: 12 }}>
+            Debug: {lastErrorDetail}
+          </Text>
+        ) : null}
+        <Pressable
+          style={{ marginTop: 12, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: isDark ? '#1f2937' : '#eef2ff' }}
+          onPress={() => {
+            setError(null);
+            setLastErrorDetail(null);
+            setIsLoading(true);
+            // trigger reload by calling effect — simplest is to call getEncyclopediaEntry directly
+            (async () => {
+              try {
+                const data = await getEncyclopediaEntry(decodedTitle);
+                setEntry(data);
+                navigation.setOptions({ title: data.title });
+              } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                setLastErrorDetail(message);
+                setError(`Retry failed: ${message}`);
+              } finally {
+                setIsLoading(false);
+              }
+            })();
+          }}
+        >
+          <Text style={{ color: isDark ? '#f8fafc' : '#1f2937', fontWeight: '600' }}>Retry</Text>
+        </Pressable>
       </View>
     );
   }
