@@ -12,9 +12,9 @@ import {
 } from 'react-native';
 
 import DummyAd from '@/components/DummyAd';
-import { Pressable } from 'react-native';
 import { useColorScheme } from '@/components/useColorScheme';
 import { EncyclopediaEntry, getEncyclopediaEntry } from '@/lib/wiki';
+import { Pressable } from 'react-native';
 
 const FALLBACK_IMAGE =
   'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Globe_icon.svg/512px-Globe_icon.svg.png';

@@ -65,7 +65,15 @@ async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`);
+    const text = await response.text().catch(() => '');
+    throw new Error(`Request failed with status ${response.status}${text ? ` — ${text.slice(0,200)}` : ''}`);
+  }
+
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    // Provide a helpful error if the server returned HTML (common when a route is rewritten)
+    const text = await response.text().catch(() => '');
+    throw new Error(`Expected JSON response but received content-type="${contentType}" body="${String(text).slice(0,200)}"`);
   }
 
   return response.json() as Promise<T>;
@@ -151,31 +159,16 @@ function flattenSections(nodes: MobileSectionNode[] = []): EncyclopediaSection[]
 
 export async function getEncyclopediaEntry(title: string): Promise<EncyclopediaEntry> {
   const encodedTitle = encodeURIComponent(title);
-
-  let summary: SummaryResponse | null = null;
-  let lastError: Error | null = null;
-
-  // Retry logic for summary endpoint (sometimes Wikipedia is slow on mobile)
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const summaryUrl = Platform.OS === 'web'
-        ? `/api/wiki-summary?title=${encodedTitle}`
-        : `${WIKI_API_HOST}/page/summary/${encodedTitle}?redirect=true`;
-
-      summary = await fetchJson<SummaryResponse>(summaryUrl);
-      break; // Success, exit loop
-    } catch (error: any) {
-      lastError = error;
-      console.warn(`Attempt ${attempt}/3 failed to load summary for "${title}":`, error?.message);
-      if (attempt < 3) {
-        // Wait a bit before retrying (exponential backoff)
-        await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
-      }
-    }
-  }
-
-  if (!summary) {
-    throw lastError || new Error(`Failed to load article "${title}" after 3 attempts`);
+  // Make a single request to Wikipedia's REST API for the summary.
+  // For desktop web we call Wikipedia directly to avoid any proxy rewrite issues.
+  const summaryUrl = `${WIKI_API_HOST}/page/summary/${encodedTitle}?redirect=true`;
+  let summary: SummaryResponse;
+  try {
+    summary = await fetchJson<SummaryResponse>(summaryUrl);
+  } catch (err: any) {
+    // Surface a clear error for the UI (includes body preview when non-JSON is returned)
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Failed to load article "${title}": ${message}`);
   }
 
   let mobileSections: MobileSectionsResponse | null = null;

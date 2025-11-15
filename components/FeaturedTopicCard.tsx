@@ -1,5 +1,5 @@
 import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { CuratedTopic } from '@/constants/topics';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -18,9 +18,33 @@ export function FeaturedTopicCard({ topic, onPress }: FeaturedTopicCardProps) {
   const [imageError, setImageError] = useState(false);
   const [imageUri, setImageUri] = useState(topic.image);
 
-  const handleImageError = () => {
+  useEffect(() => {
+    // Log the image URL being requested to help diagnose 404s on deployed sites
+    try {
+      // Only log on web to avoid noisy native logs
+      if (Platform.OS === 'web') {
+        console.debug(`[FeaturedTopicCard] requesting image for "${topic.title}":`, imageUri);
+      }
+    } catch (e) {
+      // ignore logging failures
+    }
+  }, [imageUri, topic.title]);
+
+  const handleImageError = (event?: any) => {
     if (!imageError) {
       setImageError(true);
+      // Log more details when an image fails to load so user can paste them here
+      try {
+        if (Platform.OS === 'web') {
+          console.warn('[FeaturedTopicCard] image failed to load for', topic.title, {
+            attempted: imageUri,
+            event: event?.nativeEvent ?? event,
+          });
+        }
+      } catch (e) {
+        // ignore
+      }
+
       setImageUri(FALLBACK_IMAGE);
     }
   };
