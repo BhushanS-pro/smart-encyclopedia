@@ -158,9 +158,11 @@ export async function getEncyclopediaEntry(title: string): Promise<EncyclopediaE
   // Retry logic for summary endpoint (sometimes Wikipedia is slow on mobile)
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      summary = await fetchJson<SummaryResponse>(
-        `${WIKI_API_HOST}/page/summary/${encodedTitle}?redirect=true`,
-      );
+      const summaryUrl = Platform.OS === 'web'
+        ? `/api/wiki-summary?title=${encodedTitle}`
+        : `${WIKI_API_HOST}/page/summary/${encodedTitle}?redirect=true`;
+
+      summary = await fetchJson<SummaryResponse>(summaryUrl);
       break; // Success, exit loop
     } catch (error: any) {
       lastError = error;
