@@ -210,3 +210,4 @@ export async function getEncyclopediaEntry(title: string): Promise<EncyclopediaE
     sections: [leadSection, ...remainingSections],
     url: summary.content_urls?.desktop?.page ?? summary.content_urls?.mobile?.page,
   };
+}
