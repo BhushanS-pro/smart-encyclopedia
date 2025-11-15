@@ -59,7 +59,7 @@ async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: {
       'Accept': 'application/json',
-      'User-Agent': 'SmartEncyclopedia/1.0 (Educational Encyclopedia App; https://github.com/your-repo)',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       ...(init?.headers ?? {}),
     },
   });
@@ -152,56 +152,61 @@ function flattenSections(nodes: MobileSectionNode[] = []): EncyclopediaSection[]
 export async function getEncyclopediaEntry(title: string): Promise<EncyclopediaEntry> {
   const encodedTitle = encodeURIComponent(title);
 
-  try {
-    const summary = await fetchJson<SummaryResponse>(
-      `${WIKI_API_HOST}/page/summary/${encodedTitle}?redirect=true`,
-    );
+  let summary: SummaryResponse | null = null;
+  let lastError: Error | null = null;
 
-    let mobileSections: MobileSectionsResponse | null = null;
-
-    // Skip mobile-sections on web due to CORS restrictions
-    // The summary endpoint works fine, mobile-sections is just for extra detail
-    // Note: mobile-sections may return 403 on some articles, but that's okay - we have summary
-    if (Platform.OS !== 'web') {
-      try {
-        mobileSections = await fetchJson<MobileSectionsResponse>(
-          `${WIKI_API_HOST}/page/mobile-sections/${encodedTitle}?redirect=true`,
-        );
-      } catch (error: any) {
-        // 403 errors are common for mobile-sections API - Wikipedia has rate limiting/access restrictions
-        // This is expected behavior and not a problem - the summary endpoint provides sufficient content
-        // Only log if it's not a 403 (which we expect) or in development mode
-        if (error?.message?.includes('403')) {
-          // Expected - Wikipedia restricts access to mobile-sections for some articles
-          // No need to warn, the summary endpoint has all the content we need
-        } else {
-          console.warn('Failed to load mobile sections for', title, error);
-        }
+  // Retry logic for summary endpoint (sometimes Wikipedia is slow on mobile)
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      summary = await fetchJson<SummaryResponse>(
+        `${WIKI_API_HOST}/page/summary/${encodedTitle}?redirect=true`,
+      );
+      break; // Success, exit loop
+    } catch (error: any) {
+      lastError = error;
+      console.warn(`Attempt ${attempt}/3 failed to load summary for "${title}":`, error?.message);
+      if (attempt < 3) {
+        // Wait a bit before retrying (exponential backoff)
+        await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
       }
     }
-
-    const leadText =
-      summary.extract_html ?? summary.extract ?? mobileSections?.lead.text ?? summary.title;
-
-    const leadSection: EncyclopediaSection = {
-      id: 0,
-      title: summary.title,
-      content: stripHtml(leadText),
-    };
-
-    const remainingSections = mobileSections ? flattenSections(mobileSections.remaining ?? []) : [];
-
-    return {
-      title: summary.title,
-      description: summary.description ?? mobileSections?.lead.description,
-      extract: stripHtml(leadText),
-      imageUrl: summary.originalimage?.source ?? mobileSections?.lead.image?.source,
-      thumbnailUrl: summary.thumbnail?.source,
-      sections: [leadSection, ...remainingSections],
-      url: summary.content_urls?.desktop?.page ?? summary.content_urls?.mobile?.page,
-    };
-  } catch (error: any) {
-    console.error('Error loading encyclopedia entry:', title, error);
-    // Re-throw with more context
-    throw new Error(`Failed to load article "${title}": ${error?.message || 'Unknown error'}`);
   }
+
+  if (!summary) {
+    throw lastError || new Error(`Failed to load article "${title}" after 3 attempts`);
+  }
+
+  let mobileSections: MobileSectionsResponse | null = null;
+
+  // Skip mobile-sections on web due to CORS restrictions
+  if (Platform.OS !== 'web') {
+    try {
+      mobileSections = await fetchJson<MobileSectionsResponse>(
+        `${WIKI_API_HOST}/page/mobile-sections/${encodedTitle}?redirect=true`,
+      );
+    } catch (error: any) {
+      console.warn('Failed to load mobile sections for', title, '—continuing with summary only');
+      // It's okay if this fails, we have the summary
+    }
+  }
+
+  const leadText =
+    summary.extract_html ?? summary.extract ?? mobileSections?.lead.text ?? summary.title;
+
+  const leadSection: EncyclopediaSection = {
+    id: 0,
+    title: summary.title,
+    content: stripHtml(leadText),
+  };
+
+  const remainingSections = mobileSections ? flattenSections(mobileSections.remaining ?? []) : [];
+
+  return {
+    title: summary.title,
+    description: summary.description ?? mobileSections?.lead.description,
+    extract: stripHtml(leadText),
+    imageUrl: summary.originalimage?.source ?? mobileSections?.lead.image?.source,
+    thumbnailUrl: summary.thumbnail?.source,
+    sections: [leadSection, ...remainingSections],
+    url: summary.content_urls?.desktop?.page ?? summary.content_urls?.mobile?.page,
+  };
