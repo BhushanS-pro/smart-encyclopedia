@@ -1,5 +1,4 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useColorScheme } from '@/components/useColorScheme';
 
@@ -25,7 +24,7 @@ export function SearchBar({
 
   return (
     <View style={[styles.container, isDark ? styles.containerDark : styles.containerLight]}>
-      <FontAwesome name="search" size={18} color={isDark ? '#cbd5f5' : '#52616b'} style={styles.icon} />
+      <Text style={[styles.icon, { color: isDark ? '#cbd5f5' : '#52616b' }]}>🔍</Text>
       <TextInput
         style={[styles.input, { color: isDark ? '#f8fafc' : '#1f2937' }]}
         value={value}
@@ -45,7 +44,7 @@ export function SearchBar({
           onPress={onClear}
           style={styles.clearButton}
         >
-          <FontAwesome name="close" size={16} color={isDark ? '#cbd5f5' : '#64748b'} />
+          <Text style={{ color: isDark ? '#cbd5f5' : '#64748b', fontSize: 16 }}>✕</Text>
         </Pressable>
       )}
     </View>

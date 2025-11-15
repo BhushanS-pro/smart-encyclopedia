@@ -36,13 +36,12 @@
       },
       "package": "com.bhushanbhuvan.SmartEncyclopedia"
     },
-
     "web": {
       "bundler": "metro",
-      "output": "single",
-      "favicon": "./assets/images/favicon.png"
+      "output": "static",
+      "favicon": "./assets/images/favicon.png",
+      "publicPath": "/"
     },
-
     "plugins": [
       "expo-router",
       [
