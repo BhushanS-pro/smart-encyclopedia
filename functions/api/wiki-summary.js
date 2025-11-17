@@ -13,7 +13,20 @@ async function fetchWikiSummary(title) {
     }
   });
 
-  const json = await resp.json();
+  // Check if Wikipedia returned an error
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`Wikipedia API returned ${resp.status}: ${text.slice(0, 200)}`);
+  }
+
+  // Parse and validate JSON response
+  let json;
+  try {
+    json = await resp.json();
+  } catch (jsonErr) {
+    throw new Error(`Failed to parse Wikipedia JSON response: ${jsonErr.message}`);
+  }
+
   return { status: resp.status, body: json };
 }
 
@@ -50,13 +63,14 @@ export default async function (request) {
 
     const headers = new Headers();
     headers.set('Content-Type', 'application/json');
-    // Allow all origins (Pages + local dev). For production consider restricting to your domain.
     headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
 
     return new Response(JSON.stringify(body), { status, headers });
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.error(`[wiki-summary] Error for title="${title}":`, errorMessage);
+    return new Response(JSON.stringify({ error: errorMessage }), { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
   }
 }
 
