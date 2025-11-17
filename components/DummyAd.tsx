@@ -72,7 +72,7 @@ export function DummyAd({
           className="adsbygoogle"
           ref={(el: any) => (adRef.current = el)}
           style={{ display: 'block', width: '100%' } as any}
-          data-ad-client={pubId ?? 'ca-pub-REPLACE_WITH_YOUR_PUBID'}
+          data-ad-client={pubId ?? 'ca-pub-8947922622346274'}
           data-ad-slot={adUnitId ?? '0000000000'}
           data-ad-format="auto"
           data-full-width-responsive="true"

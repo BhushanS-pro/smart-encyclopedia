@@ -149,7 +149,7 @@ export default function ArticleScreen() {
         <Text style={[styles.extract, { color: isDark ? '#e2e8f0' : '#1f2937' }]}>{entry.extract}</Text>
 
         {/* Inline dummy ad for web */}
-        <DummyAd size="banner" adUnitId="article-banner-1" />
+        <DummyAd size="banner" adUnitId="article-banner-1" useRealAds={true} />
 
         {entry.sections.slice(1).map((section) => (
           <View key={section.id} style={styles.section}>

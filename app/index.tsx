@@ -217,7 +217,7 @@ export default function HomeScreen() {
             </View>
 
             {/* Dummy AdSense placeholder (web only) */}
-            <DummyAd size="banner" adUnitId="home-banner-1" />
+            <DummyAd size="banner" adUnitId="home-banner-1" useRealAds={true} />
           </>
         )}
       </ScrollView>
