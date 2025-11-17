@@ -71,11 +71,16 @@ export function DummyAd({
         <ins
           className="adsbygoogle"
           ref={(el: any) => (adRef.current = el)}
-          style={{ display: 'block', width: '100%' } as any}
-          data-ad-client={pubId ?? 'ca-pub-8947922622346274'}
+          // For banner ads, limit height to avoid large auto-sized ads.
+          style={
+            (size === 'banner'
+              ? ({ display: 'block', width: '100%', height: 90 } as any)
+              : { display: 'block', width: '100%' } as any)
+          }
+          data-ad-client={pubId ?? 'ca-pub-8201400322154299'}
           data-ad-slot={adUnitId ?? '0000000000'}
-          data-ad-format="auto"
-          data-full-width-responsive="true"
+          data-ad-format={size === 'banner' ? 'horizontal' : 'auto'}
+          {...(size === 'banner' ? {} : { 'data-full-width-responsive': 'true' })}
         />
         <Text style={styles.small}>{loaded ? 'Ad requested' : 'Requesting ad...'}</Text>
       </View>

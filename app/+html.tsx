@@ -27,7 +27,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
         */}
         <script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8947922622346274"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8201400322154299"
           crossOrigin="anonymous"
         ></script>
       </head>
