@@ -1,8 +1,8 @@
+import { useEffect, useState } from 'react';
 import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useState, useEffect } from 'react';
 
-import { CuratedTopic } from '@/constants/topics';
 import { useColorScheme } from '@/components/useColorScheme';
+import { CuratedTopic } from '@/constants/topics';
 
 interface FeaturedTopicCardProps {
   topic: CuratedTopic;

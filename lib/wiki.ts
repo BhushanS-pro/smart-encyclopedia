@@ -159,9 +159,13 @@ function flattenSections(nodes: MobileSectionNode[] = []): EncyclopediaSection[]
 
 export async function getEncyclopediaEntry(title: string): Promise<EncyclopediaEntry> {
   const encodedTitle = encodeURIComponent(title);
-  // Make a single request to Wikipedia's REST API for the summary.
-  // For desktop web we call Wikipedia directly to avoid any proxy rewrite issues.
-  const summaryUrl = `${WIKI_API_HOST}/page/summary/${encodedTitle}?redirect=true`;
+  
+  // On web, use the local proxy endpoint to avoid Safari mobile CORS issues
+  // On native, call Wikipedia directly
+  const summaryUrl = Platform.OS === 'web'
+    ? `/api/wiki-summary?title=${encodedTitle}`
+    : `${WIKI_API_HOST}/page/summary/${encodedTitle}?redirect=true`;
+  
   let summary: SummaryResponse;
   try {
     summary = await fetchJson<SummaryResponse>(summaryUrl);
