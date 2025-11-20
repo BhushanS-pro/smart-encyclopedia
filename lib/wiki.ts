@@ -2,6 +2,15 @@ import { Platform } from 'react-native';
 
 const WIKI_API_HOST = 'https://en.wikipedia.org/api/rest_v1';
 const WIKI_SEARCH_HOST = 'https://en.wikipedia.org/w/rest.php/v1/search/page';
+const DEFAULT_WIKI_PROXY_PATH = '/api/wiki-summary';
+const DEFAULT_API_BASE =
+  typeof process !== 'undefined'
+    ? process.env.EXPO_PUBLIC_API_BASE_URL?.replace(/\/$/, '') ?? ''
+    : '';
+const DEFAULT_PROXY_ENDPOINT =
+  typeof process !== 'undefined' && process.env.EXPO_PUBLIC_WIKI_SUMMARY_PATH
+    ? process.env.EXPO_PUBLIC_WIKI_SUMMARY_PATH
+    : DEFAULT_WIKI_PROXY_PATH;
 
 export interface WikiThumbnail {
   url: string;
@@ -77,6 +86,48 @@ async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+function isProbablyLocalhost(hostname?: string): boolean {
+  if (!hostname) {
+    return true;
+  }
+
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return true;
+  }
+
+  if (hostname.endsWith('.local')) {
+    return true;
+  }
+
+  if (/^10\./.test(hostname) || /^192\.168\./.test(hostname) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)) {
+    return true;
+  }
+
+  return false;
+}
+
+function shouldUseWikiProxy(): boolean {
+  if (Platform.OS !== 'web') {
+    return false;
+  }
+
+  const locationObject =
+    typeof globalThis !== 'undefined' && 'location' in globalThis
+      ? (globalThis as { location?: { hostname?: string } }).location
+      : undefined;
+
+  const host = locationObject?.hostname;
+  return !isProbablyLocalhost(host);
+}
+
+function buildProxyUrl(encodedTitle: string): string {
+  const proxyBase = DEFAULT_API_BASE || '';
+  const proxyPath = DEFAULT_PROXY_ENDPOINT.startsWith('http')
+    ? DEFAULT_PROXY_ENDPOINT
+    : `${proxyBase}${DEFAULT_PROXY_ENDPOINT}`;
+  return `${proxyPath}?title=${encodedTitle}`;
 }
 
 export async function searchEncyclopedia(query: string, limit = 20): Promise<WikiSearchItem[]> {
@@ -159,19 +210,33 @@ function flattenSections(nodes: MobileSectionNode[] = []): EncyclopediaSection[]
 
 export async function getEncyclopediaEntry(title: string): Promise<EncyclopediaEntry> {
   const encodedTitle = encodeURIComponent(title);
-  
-  // Call Wikipedia's REST API directly for the summary.
-  // Desktop web works with the public Wikipedia REST API; mobile Safari CORS
-  // corner-cases can be handled by server-side proxy functions separately.
   const summaryUrl = `${WIKI_API_HOST}/page/summary/${encodedTitle}?redirect=true`;
-  
-  let summary: SummaryResponse;
-  try {
-    summary = await fetchJson<SummaryResponse>(summaryUrl);
-  } catch (err: any) {
-    // Surface a clear error for the UI (includes body preview when non-JSON is returned)
-    const message = err instanceof Error ? err.message : String(err);
-    throw new Error(`Failed to load article "${title}": ${message}`);
+  const useProxy = shouldUseWikiProxy();
+  const attempts: string[] = [];
+
+  const tryFetchSummary = async (url: string, label: string): Promise<SummaryResponse | null> => {
+    try {
+      return await fetchJson<SummaryResponse>(url);
+    } catch (err: any) {
+      const message = err instanceof Error ? err.message : String(err);
+      attempts.push(`${label} failed: ${message}`);
+      return null;
+    }
+  };
+
+  let summary: SummaryResponse | null = null;
+
+  if (useProxy) {
+    summary = await tryFetchSummary(buildProxyUrl(encodedTitle), 'proxy');
+  }
+
+  if (!summary) {
+    summary = await tryFetchSummary(summaryUrl, 'direct');
+  }
+
+  if (!summary) {
+    const detail = attempts.join(' | ') || 'Unknown error';
+    throw new Error(`Failed to load article "${title}": ${detail}`);
   }
 
   let mobileSections: MobileSectionsResponse | null = null;
