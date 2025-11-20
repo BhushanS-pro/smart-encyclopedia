@@ -40,16 +40,12 @@
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png",
-      "publicPath": "/"
+      "publicPath": "/",
+       "rewrites": []
     },
     "plugins": [
       "expo-router",
-      [
-        "expo-ads-admob",
-        {
-          "userTrackingPermission": false
-        }
-      ]
+     
     ],
     "experiments": {
       "typedRoutes": true
