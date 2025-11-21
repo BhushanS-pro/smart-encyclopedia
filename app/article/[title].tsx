@@ -14,7 +14,6 @@ import {
 import DummyAd from '@/components/DummyAd';
 import { useColorScheme } from '@/components/useColorScheme';
 import { EncyclopediaEntry, getEncyclopediaEntry } from '@/lib/wiki';
-import { Pressable } from 'react-native';
 
 const FALLBACK_IMAGE =
   'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Globe_icon.svg/512px-Globe_icon.svg.png';
@@ -35,12 +34,12 @@ export default function ArticleScreen() {
 
   useEffect(() => {
     navigation.setOptions({ title: decodedTitle || 'Encyclopedia Entry' });
-  }, [decodedTitle, navigation]);
+  }, [decodedTitle]);
 
   useEffect(() => {
     let isActive = true;
 
-      const loadEntry = async () => {
+    const loadEntry = async () => {
       if (!decodedTitle) {
         setError('Missing article title.');
         return;
@@ -56,16 +55,11 @@ export default function ArticleScreen() {
           navigation.setOptions({ title: data.title });
         }
       } catch (err) {
-        if (isActive) {
-            console.error('Failed to load article:', decodedTitle, err);
-            const message = err instanceof Error ? err.message : String(err);
-            setLastErrorDetail(message);
-            setError(`We could not load this entry right now. (${message})`);
-        }
+        const message = err instanceof Error ? err.message : String(err);
+        setLastErrorDetail(message);
+        setError(`We could not load this entry right now. (${message})`);
       } finally {
-        if (isActive) {
-          setIsLoading(false);
-        }
+        if (isActive) setIsLoading(false);
       }
     };
 
@@ -74,7 +68,7 @@ export default function ArticleScreen() {
     return () => {
       isActive = false;
     };
-  }, [decodedTitle, navigation]);
+  }, [decodedTitle]);
 
   if (isLoading) {
     return (
@@ -89,42 +83,16 @@ export default function ArticleScreen() {
     return (
       <View style={[styles.centered, { backgroundColor: isDark ? '#020617' : '#f8fafc' }]}>
         <Text style={[styles.errorText, { color: isDark ? '#fca5a5' : '#b91c1c' }]}>{error}</Text>
-        {lastErrorDetail ? (
+        {lastErrorDetail && (
           <Text style={{ marginTop: 8, color: isDark ? '#cbd5f5' : '#475569', fontSize: 12 }}>
             Debug: {lastErrorDetail}
           </Text>
-        ) : null}
-        <Pressable
-          style={{ marginTop: 12, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: isDark ? '#1f2937' : '#eef2ff' }}
-          onPress={() => {
-            setError(null);
-            setLastErrorDetail(null);
-            setIsLoading(true);
-            // trigger reload by calling effect — simplest is to call getEncyclopediaEntry directly
-            (async () => {
-              try {
-                const data = await getEncyclopediaEntry(decodedTitle);
-                setEntry(data);
-                navigation.setOptions({ title: data.title });
-              } catch (err) {
-                const message = err instanceof Error ? err.message : String(err);
-                setLastErrorDetail(message);
-                setError(`Retry failed: ${message}`);
-              } finally {
-                setIsLoading(false);
-              }
-            })();
-          }}
-        >
-          <Text style={{ color: isDark ? '#f8fafc' : '#1f2937', fontWeight: '600' }}>Retry</Text>
-        </Pressable>
+        )}
       </View>
     );
   }
 
-  if (!entry) {
-    return null;
-  }
+  if (!entry) return null;
 
   return (
     <ScrollView
@@ -141,16 +109,21 @@ export default function ArticleScreen() {
 
       <View style={[styles.body, { backgroundColor: isDark ? '#0f172a' : '#ffffff' }]}>
         <Text style={[styles.title, { color: isDark ? '#f8fafc' : '#0f172a' }]}>{entry.title}</Text>
-        {entry.description ? (
+
+        {entry.description && (
           <Text style={[styles.description, { color: isDark ? '#cbd5f5' : '#475569' }]}>
             {entry.description}
           </Text>
-        ) : null}
-        <Text style={[styles.extract, { color: isDark ? '#e2e8f0' : '#1f2937' }]}>{entry.extract}</Text>
+        )}
 
-        {/* Inline dummy ad for web */}
+        <Text style={[styles.extract, { color: isDark ? '#e2e8f0' : '#1f2937' }]}>
+          {entry.extract}
+        </Text>
+
+        {/* Banner Ad */}
         <DummyAd size="banner" adUnitId="article-banner-1" useRealAds={true} />
 
+        {/* Sections */}
         {entry.sections.slice(1).map((section) => (
           <View key={section.id} style={styles.section}>
             <Text style={[styles.sectionTitle, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
@@ -162,55 +135,47 @@ export default function ArticleScreen() {
           </View>
         ))}
 
-        {entry.url ? (
+        {entry.url && (
           <Text
             style={[styles.externalLink, { color: isDark ? '#93c5fd' : '#2563eb' }]}
             onPress={() => Linking.openURL(entry.url!)}
           >
             Continue reading on Wikipedia
           </Text>
-        ) : null}
+        )}
+
+        {/* PRIVACY POLICY LINK */}
+        <Text
+          style={{
+            marginTop: 30,
+            color: isDark ? '#93c5fd' : '#2563eb',
+            textAlign: 'center',
+            textDecorationLine: 'underline',
+            fontSize: 14,
+          }}
+          onPress={() => navigation.navigate('privacy-policy')}
+        >
+          Privacy Policy
+        </Text>
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-  },
-  errorText: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  contentContainer: {
-    paddingBottom: 48,
-  },
-  heroWrapper: {
-    height: 260,
-    overflow: 'hidden',
-    backgroundColor: '#1f2937',
-  },
-  heroImage: {
-    width: '100%',
-    height: '100%',
-  },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  loadingText: { marginTop: 16, fontSize: 16 },
+  errorText: { fontSize: 16, textAlign: 'center' },
+  contentContainer: { paddingBottom: 48 },
+  heroWrapper: { height: 260, overflow: 'hidden', backgroundColor: '#1f2937' },
+  heroImage: { width: '100%', height: '100%' },
   body: {
     marginHorizontal: 16,
     marginTop: -40,
     padding: 24,
     borderRadius: 28,
     ...Platform.select({
-      web: {
-        boxShadow: '0 12px 24px rgba(15, 23, 42, 0.18)',
-      },
+      web: { boxShadow: '0 12px 24px rgba(15,23,42,0.18)' },
       default: {
         shadowColor: '#0f172a33',
         shadowOffset: { width: 0, height: 12 },
@@ -220,35 +185,11 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  description: {
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  extract: {
-    fontSize: 16,
-    lineHeight: 23,
-    marginBottom: 16,
-  },
-  section: {
-    marginTop: 18,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  sectionContent: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  externalLink: {
-    marginTop: 28,
-    fontSize: 15,
-    fontWeight: '600',
-  },
+  title: { fontSize: 28, fontWeight: '700', marginBottom: 8 },
+  description: { fontSize: 16, marginBottom: 12 },
+  extract: { fontSize: 16, lineHeight: 23, marginBottom: 16 },
+  section: { marginTop: 18 },
+  sectionTitle: { fontSize: 20, fontWeight: '700', marginBottom: 8 },
+  sectionContent: { fontSize: 15, lineHeight: 22 },
+  externalLink: { marginTop: 28, fontSize: 15, fontWeight: '600' },
 });
