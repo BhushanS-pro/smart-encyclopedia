@@ -2,15 +2,17 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    if (url.pathname === '/api/health' || url.pathname === '/api/_health') {
+    // HEALTH CHECK
+    if (url.pathname === "/api/health" || url.pathname === "/api/_health") {
       return new Response(JSON.stringify({ ok: true }), {
         status: 200,
         headers: defaultHeaders(),
       });
     }
 
-    if (url.pathname === '/api/wiki-summary') {
-      if (request.method === 'OPTIONS') {
+    // WIKI SUMMARY
+    if (url.pathname === "/api/wiki-summary") {
+      if (request.method === "OPTIONS") {
         return new Response(null, {
           status: 204,
           headers: corsPreflightHeaders(),
@@ -18,23 +20,28 @@ export default {
       }
 
       try {
-        const title = url.searchParams.get('title');
+        const title = url.searchParams.get("title");
         if (!title) {
-          return new Response(JSON.stringify({ error: 'Missing title parameter' }), {
-            status: 400,
-            headers: defaultHeaders(),
-          });
+          return new Response(
+            JSON.stringify({ error: "Missing title parameter" }),
+            {
+              status: 400,
+              headers: defaultHeaders(),
+            }
+          );
         }
 
         const wikiResponse = await fetch(
-          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}?redirect=true`,
+          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+            title
+          )}?redirect=true`,
           {
             headers: {
-              Accept: 'application/json',
-              'User-Agent':
-                'Mozilla/5.0 (compatible; SmartEncyclopedia/1.0; +https://smartencyclopedia.uk)',
+              Accept: "application/json",
+              "User-Agent":
+                "Mozilla/5.0 (compatible; SmartEncyclopedia/1.0; +https://smartencyclopedia.uk)",
             },
-          },
+          }
         );
 
         const bodyText = await wikiResponse.text();
@@ -48,7 +55,7 @@ export default {
             {
               status: wikiResponse.status,
               headers: defaultHeaders(),
-            },
+            }
           );
         }
 
@@ -58,14 +65,14 @@ export default {
         } catch (err) {
           return new Response(
             JSON.stringify({
-              error: 'Failed to parse Wikipedia response as JSON',
+              error: "Failed to parse Wikipedia response as JSON",
               detail: String(err?.message ?? err),
               body: bodyText.slice(0, 200),
             }),
             {
               status: 502,
               headers: defaultHeaders(),
-            },
+            }
           );
         }
 
@@ -81,26 +88,25 @@ export default {
       }
     }
 
+    // FALLBACK TO STATIC FILES
     return env.ASSETS.fetch(request, ctx);
   },
 };
 
 function defaultHeaders() {
   return {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
   };
 }
 
 function corsPreflightHeaders() {
   return {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-    'Access-Control-Max-Age': '86400',
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+    "Access-Control-Max-Age": "86400",
   };
 }
-
-
