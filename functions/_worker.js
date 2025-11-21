@@ -2,7 +2,7 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // HEALTH CHECK
+    // Health check
     if (url.pathname === "/api/health" || url.pathname === "/api/_health") {
       return new Response(JSON.stringify({ ok: true }), {
         status: 200,
@@ -10,7 +10,7 @@ export default {
       });
     }
 
-    // WIKI SUMMARY
+    // Wikipedia summary proxy
     if (url.pathname === "/api/wiki-summary") {
       if (request.method === "OPTIONS") {
         return new Response(null, {
@@ -66,7 +66,7 @@ export default {
           return new Response(
             JSON.stringify({
               error: "Failed to parse Wikipedia response as JSON",
-              detail: String(err?.message ?? err),
+              detail: err?.message || String(err),
               body: bodyText.slice(0, 200),
             }),
             {
@@ -88,7 +88,7 @@ export default {
       }
     }
 
-    // FALLBACK TO STATIC FILES
+    // Static files
     return env.ASSETS.fetch(request, ctx);
   },
 };
