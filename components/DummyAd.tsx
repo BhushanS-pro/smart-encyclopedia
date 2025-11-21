@@ -1,23 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 type Props = {
-  /** 'banner' | 'square' | 'large' - controls visual size */
   size?: 'banner' | 'square' | 'large' | 'responsive';
-  /** ad slot id (AdSense `data-ad-slot`) */
   adUnitId?: string;
-  /** AdSense publisher id (ca-pub-...) - if not provided a placeholder is used */
   pubId?: string;
-  /** When true, render the real AdSense markup (`ins`) and call adsbygoogle.push - web only */
   useRealAds?: boolean;
 };
 
 /**
- * DummyAd
- * - Renders a visual placeholder by default (web only).
- * - When `useRealAds` is true, renders the real AdSense `ins` element and invokes
- *   `(adsbygoogle = window.adsbygoogle || []).push({})` to request the ad.
- * - On native platforms it renders nothing.
+ * DummyAd Component
+ * ------------------
+ * - On mobile/native: renders nothing
+ * - On web and useRealAds=false → renders placeholder dummy ad
+ * - On web and useRealAds=true → loads REAL Google AdSense ad
  */
 export function DummyAd({
   size = 'responsive',
@@ -32,23 +28,22 @@ export function DummyAd({
     if (Platform.OS !== 'web') return;
 
     if (useRealAds) {
-      // Attempt to (re)load AdSense slot after the element mounts.
-      // Ensure `adsbygoogle` exists and then push.
+      // Load Google AdSense after element mounts
       const t = setTimeout(() => {
         try {
           (window as any).adsbygoogle = (window as any).adsbygoogle || [];
           (window as any).adsbygoogle.push({});
           setLoaded(true);
         } catch (err) {
-          // ignore - AdSense script might not be present or blocked
+          console.warn("AdSense load error:", err);
           setLoaded(false);
         }
-      }, 50);
+      }, 200);
 
       return () => clearTimeout(t);
     }
 
-    // If not using real ads, simulate load for visual placeholder
+    // Dummy ad loading animation
     const t = setTimeout(() => setLoaded(true), 600);
     return () => clearTimeout(t);
   }, [useRealAds]);
@@ -62,36 +57,45 @@ export function DummyAd({
     size === 'large' && styles.large,
   ];
 
+  // ================================
+  // REAL GOOGLE ADSENSE MODE
+  // ================================
   if (useRealAds) {
-    // Render real AdSense markup. NOTE: you must replace the placeholder
-    // publisher id with your real `ca-pub-XXXXXXXX` in `app/+html.tsx` or
-    // pass `pubId` prop to this component.
     return (
       <View style={style as any}>
         <ins
           className="adsbygoogle"
           ref={(el: any) => (adRef.current = el)}
-          // For banner ads, limit height to avoid large auto-sized ads.
           style={
-            (size === 'banner'
-              ? ({ display: 'block', width: '100%', height: 90 } as any)
-              : { display: 'block', width: '100%' } as any)
+            size === 'banner'
+              ? { display: 'block', width: '100%', height: 90 }
+              : { display: 'block', width: '100%' }
           }
-          data-ad-client={pubId ?? 'ca-pub-8201400322154299'}
+          // YOUR REAL PUBLISHER ID
+          data-ad-client={pubId ?? 'ca-pub-8947922622346274'}
           data-ad-slot={adUnitId ?? '0000000000'}
           data-ad-format={size === 'banner' ? 'horizontal' : 'auto'}
-          {...(size === 'banner' ? {} : { 'data-full-width-responsive': 'true' })}
+          {...(size !== 'banner'
+            ? { 'data-full-width-responsive': 'true' }
+            : {})}
         />
-        <Text style={styles.small}>{loaded ? 'Ad requested' : 'Requesting ad...'}</Text>
+        <Text style={styles.small}>
+          {loaded ? 'Ad requested' : 'Requesting ad...'}
+        </Text>
       </View>
     );
   }
 
+  // ================================
+  // PLACEHOLDER (DUMMY) MODE
+  // ================================
   return (
     <View style={style as any}>
       <Text style={styles.label}>Sponsored</Text>
       <Text style={styles.title}>Sample Ad — Dummy AdSense</Text>
-      <Text style={styles.small}>{adUnitId ? `adUnit: ${adUnitId}` : 'Test ad unit'}</Text>
+      <Text style={styles.small}>
+        {adUnitId ? `adUnit: ${adUnitId}` : 'Test ad unit'}
+      </Text>
       <Text style={styles.small}>{loaded ? 'Ad loaded' : 'Loading ad...'}</Text>
     </View>
   );
