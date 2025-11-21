@@ -1,39 +1,48 @@
-export async function onRequest(context) {
-  const request = context.request;
-  const url = new URL(request.url);
+export async function onRequestGet(ctx) {
+  const url = new URL(ctx.request.url);
   const title = url.searchParams.get("title");
 
   if (!title) {
     return new Response(JSON.stringify({ error: "Missing title" }), {
       status: 400,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
+      headers: { "Content-Type": "application/json" }
     });
   }
 
-  try {
-    const wiki = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`
+  const apiURL = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}?redirect=true`;
+
+  // Wikipedia requires a real User-Agent
+  const userAgent =
+    "SmartEncyclopediaBot/1.0 (https://smartencyclopedia.pages.dev; contact: support@smartencyclopedia.uk)";
+
+  const wikiResponse = await fetch(apiURL, {
+    headers: {
+      "Accept": "application/json",
+      "User-Agent": userAgent
+    }
+  });
+
+  if (!wikiResponse.ok) {
+    const text = await wikiResponse.text();
+    return new Response(
+      JSON.stringify({
+        error: `Wikipedia error: ${wikiResponse.status}`,
+        detail: text.slice(0, 200)
+      }),
+      {
+        status: wikiResponse.status,
+        headers: { "Content-Type": "application/json" }
+      }
     );
-
-    const body = await wiki.text();
-
-    return new Response(body, {
-      status: wiki.status,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.toString() }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
   }
+
+  const json = await wikiResponse.json();
+
+  return new Response(JSON.stringify(json), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*"
+    }
+  });
 }
