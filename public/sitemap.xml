@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>https://smartencyclopedia.uk/</loc>
+    <priority>1.0</priority>
+    <changefreq>daily</changefreq>
+  </url>
+
+  <url>
+    <loc>https://smartencyclopedia.uk/science</loc>
+  </url>
+
+  <url>
+    <loc>https://smartencyclopedia.uk/history</loc>
+  </url>
+
+  <url>
+    <loc>https://smartencyclopedia.uk/technology</loc>
+  </url>
+
+  <url>
+    <loc>https://smartencyclopedia.uk/space</loc>
+  </url>
+
+  <url>
+    <loc>https://smartencyclopedia.uk/biology</loc>
+  </url>
+
+  <url>
+    <loc>https://smartencyclopedia.uk/privacy-policy</loc>
+  </url>
+
+  <url>
+    <loc>https://smartencyclopedia.uk/terms</loc>
+  </url>
+
+  <url>
+    <loc>https://smartencyclopedia.uk/contact</loc>
+  </url>
+
+  <url>
+    <loc>https://smartencyclopedia.uk/about</loc>
+  </url>
+</urlset>
