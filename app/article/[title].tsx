@@ -4,16 +4,17 @@ import {
   ActivityIndicator,
   Image,
   Linking,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
-  View,
+  View
 } from 'react-native';
 
 import DummyAd from '@/components/DummyAd';
+import FooterNav from '@/components/FooterNav';
 import { useColorScheme } from '@/components/useColorScheme';
 import { EncyclopediaEntry, getEncyclopediaEntry } from '@/lib/wiki';
+import { Pressable } from 'react-native';
 
 const FALLBACK_IMAGE =
   'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Globe_icon.svg/512px-Globe_icon.svg.png';
@@ -21,8 +22,7 @@ const FALLBACK_IMAGE =
 export default function ArticleScreen() {
   const params = useLocalSearchParams();
   const navigation = useNavigation();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = useColorScheme() === 'dark';
 
   const requestedTitle = Array.isArray(params.title) ? params.title[0] : params.title ?? '';
   const decodedTitle = useMemo(() => decodeURIComponent(requestedTitle), [requestedTitle]);
@@ -34,7 +34,7 @@ export default function ArticleScreen() {
 
   useEffect(() => {
     navigation.setOptions({ title: decodedTitle || 'Encyclopedia Entry' });
-  }, [decodedTitle]);
+  }, [decodedTitle, navigation]);
 
   useEffect(() => {
     let isActive = true;
@@ -55,26 +55,54 @@ export default function ArticleScreen() {
           navigation.setOptions({ title: data.title });
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        setLastErrorDetail(message);
-        setError(`We could not load this entry right now. (${message})`);
+        if (isActive) {
+          const message = err instanceof Error ? err.message : String(err);
+          setLastErrorDetail(message);
+          setError(`We could not load this entry right now. (${message})`);
+        }
       } finally {
         if (isActive) setIsLoading(false);
       }
     };
 
     loadEntry();
-
     return () => {
       isActive = false;
     };
-  }, [decodedTitle]);
+  }, [decodedTitle, navigation]);
+
+  // ✅ ARTICLE SCHEMA - Auto SEO
+  const articleSchema = useMemo(
+    () =>
+      entry
+        ? {
+            '@context': 'https://schema.org',
+            '@type': 'Article',
+            headline: entry.title,
+            description: entry.description,
+            image: entry.imageUrl || entry.thumbnailUrl,
+            url: `https://smartencyclopedia.uk/article/${encodeURIComponent(entry.title)}`,
+            author: 'Smart Encyclopedia',
+            publisher: {
+              '@type': 'Organization',
+              name: 'Smart Encyclopedia',
+              logo: {
+                '@type': 'ImageObject',
+                url: 'https://smartencyclopedia.uk/icon.png',
+              },
+            },
+          }
+        : null,
+    [entry]
+  );
 
   if (isLoading) {
     return (
       <View style={[styles.centered, { backgroundColor: isDark ? '#020617' : '#f8fafc' }]}>
         <ActivityIndicator size="large" color={isDark ? '#3b82f6' : '#1d4ed8'} />
-        <Text style={[styles.loadingText, { color: isDark ? '#cbd5f5' : '#475569' }]}>Loading entry...</Text>
+        <Text style={[styles.loadingText, { color: isDark ? '#cbd5f5' : '#475569' }]}>
+          Loading...
+        </Text>
       </View>
     );
   }
@@ -83,11 +111,33 @@ export default function ArticleScreen() {
     return (
       <View style={[styles.centered, { backgroundColor: isDark ? '#020617' : '#f8fafc' }]}>
         <Text style={[styles.errorText, { color: isDark ? '#fca5a5' : '#b91c1c' }]}>{error}</Text>
+
         {lastErrorDetail && (
           <Text style={{ marginTop: 8, color: isDark ? '#cbd5f5' : '#475569', fontSize: 12 }}>
             Debug: {lastErrorDetail}
           </Text>
         )}
+
+        <Pressable
+          style={{
+            marginTop: 12,
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            borderRadius: 8,
+            backgroundColor: isDark ? '#1f2937' : '#eef2ff',
+          }}
+          onPress={() => {
+            setError(null);
+            setLastErrorDetail(null);
+            setIsLoading(true);
+            getEncyclopediaEntry(decodedTitle)
+              .then((d) => setEntry(d))
+              .catch((err) => setLastErrorDetail(err.message))
+              .finally(() => setIsLoading(false));
+          }}
+        >
+          <Text style={{ fontWeight: '600', color: isDark ? '#fff' : '#111' }}>Retry</Text>
+        </Pressable>
       </View>
     );
   }
@@ -99,37 +149,43 @@ export default function ArticleScreen() {
       style={{ flex: 1, backgroundColor: isDark ? '#020617' : '#f8fafc' }}
       contentContainerStyle={styles.contentContainer}
     >
-      <View style={styles.heroWrapper}>
-        <Image
-          source={{ uri: entry.imageUrl ?? entry.thumbnailUrl ?? FALLBACK_IMAGE }}
-          style={styles.heroImage}
-          resizeMode="cover"
+      {/* ============================= */}
+      {/* 📌 Inject Article Schema Here */}
+      {/* ============================= */}
+      {articleSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
         />
-      </View>
+      )}
 
-      <View style={[styles.body, { backgroundColor: isDark ? '#0f172a' : '#ffffff' }]}>
-        <Text style={[styles.title, { color: isDark ? '#f8fafc' : '#0f172a' }]}>{entry.title}</Text>
+      <Image
+        source={{ uri: entry.imageUrl ?? entry.thumbnailUrl ?? FALLBACK_IMAGE }}
+        style={styles.heroImage}
+      />
+
+      <View style={[styles.body, { backgroundColor: isDark ? '#0f172a' : '#fff' }]}>
+        <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>{entry.title}</Text>
 
         {entry.description && (
-          <Text style={[styles.description, { color: isDark ? '#cbd5f5' : '#475569' }]}>
+          <Text style={[styles.description, { color: isDark ? '#cbd5f5' : '#444' }]}>
             {entry.description}
           </Text>
         )}
 
-        <Text style={[styles.extract, { color: isDark ? '#e2e8f0' : '#1f2937' }]}>
+        <Text style={[styles.extract, { color: isDark ? '#e2e8f0' : '#222' }]}>
           {entry.extract}
         </Text>
 
-        {/* Banner Ad */}
+        {/* Ad inside Article */}
         <DummyAd size="banner" adUnitId="article-banner-1" useRealAds={true} />
 
-        {/* Sections */}
         {entry.sections.slice(1).map((section) => (
           <View key={section.id} style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : '#000' }]}>
               {section.title}
             </Text>
-            <Text style={[styles.sectionContent, { color: isDark ? '#cbd5f5' : '#1f2937' }]}>
+            <Text style={[styles.sectionContent, { color: isDark ? '#cbd5f5' : '#222' }]}>
               {section.content}
             </Text>
           </View>
@@ -140,56 +196,33 @@ export default function ArticleScreen() {
             style={[styles.externalLink, { color: isDark ? '#93c5fd' : '#2563eb' }]}
             onPress={() => Linking.openURL(entry.url!)}
           >
-            Continue reading on Wikipedia
+            Continue reading on Wikipedia →
           </Text>
         )}
-
-        {/* PRIVACY POLICY LINK */}
-        <Text
-          style={{
-            marginTop: 30,
-            color: isDark ? '#93c5fd' : '#2563eb',
-            textAlign: 'center',
-            textDecorationLine: 'underline',
-            fontSize: 14,
-          }}
-          onPress={() => navigation.navigate('privacy-policy')}
-        >
-          Privacy Policy
-        </Text>
       </View>
+
+      {/* FOOTER */}
+      <FooterNav />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  loadingText: { marginTop: 16, fontSize: 16 },
-  errorText: { fontSize: 16, textAlign: 'center' },
-  contentContainer: { paddingBottom: 48 },
-  heroWrapper: { height: 260, overflow: 'hidden', backgroundColor: '#1f2937' },
-  heroImage: { width: '100%', height: '100%' },
+  contentContainer: { paddingBottom: 60 },
+  heroImage: { width: '100%', height: 260 },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   body: {
-    marginHorizontal: 16,
-    marginTop: -40,
+    margin: 16,
     padding: 24,
-    borderRadius: 28,
-    ...Platform.select({
-      web: { boxShadow: '0 12px 24px rgba(15,23,42,0.18)' },
-      default: {
-        shadowColor: '#0f172a33',
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: 0.18,
-        shadowRadius: 24,
-        elevation: 6,
-      },
-    }),
+    borderRadius: 20,
   },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 8 },
-  description: { fontSize: 16, marginBottom: 12 },
-  extract: { fontSize: 16, lineHeight: 23, marginBottom: 16 },
-  section: { marginTop: 18 },
-  sectionTitle: { fontSize: 20, fontWeight: '700', marginBottom: 8 },
+  title: { fontSize: 26, fontWeight: '700', marginBottom: 8 },
+  description: { fontSize: 16, marginBottom: 10 },
+  extract: { fontSize: 16, marginBottom: 20, lineHeight: 22 },
+  section: { marginTop: 20 },
+  sectionTitle: { fontSize: 20, fontWeight: 'bold' },
   sectionContent: { fontSize: 15, lineHeight: 22 },
-  externalLink: { marginTop: 28, fontSize: 15, fontWeight: '600' },
+  externalLink: { marginTop: 30, fontWeight: '700', fontSize: 16 },
+  loadingText: { marginTop: 10, fontSize: 16 },
+  errorText: { fontSize: 16, textAlign: 'center' },
 });
