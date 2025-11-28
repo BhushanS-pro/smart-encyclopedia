@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -117,14 +118,29 @@ export default function HomeScreen() {
         {/* SEARCH RESULTS */}
         {debouncedQuery.trim().length >= 2 ? (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: isDark ? "#fff" : "#000" }]}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: isDark ? "#fff" : "#000" },
+              ]}
+            >
               Results
             </Text>
 
             {results.length === 0 ? (
-              <Text style={styles.emptyState}>
-                No results — More content coming soon.
-              </Text>
+              <View style={styles.noResultBox}>
+                <Image
+                  source={require("@/assets/images/coming-soon.png")}
+                  style={styles.noResultImage}
+                  resizeMode="contain"
+                />
+                <Text style={styles.noResultTitle}>
+                  Article Coming Soon! 🚀
+                </Text>
+                <Text style={styles.noResultSubtitle}>
+                  We will add this topic very soon! Stay tuned.
+                </Text>
+              </View>
             ) : (
               results.map((item) => {
                 const matchedArticle = articles.find(
@@ -137,10 +153,11 @@ export default function HomeScreen() {
                   <ResultCard
                     key={item.id}
                     item={item}
-                    onPress={() => {
-                      if (matchedArticle) openArticle(matchedArticle.slug);
-                      else alert("This article will be added soon!");
-                    }}
+                    onPress={() =>
+                      matchedArticle
+                        ? openArticle(matchedArticle.slug)
+                        : alert("This article will be added soon!")
+                    }
                   />
                 );
               })
@@ -150,7 +167,12 @@ export default function HomeScreen() {
           <>
             {/* CATEGORIES */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: isDark ? "#fff" : "#000" }]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { color: isDark ? "#fff" : "#000" },
+                ]}
+              >
                 Browse Categories
               </Text>
 
@@ -173,7 +195,12 @@ export default function HomeScreen() {
 
             {/* FEATURED */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: isDark ? "#fff" : "#000" }]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { color: isDark ? "#fff" : "#000" },
+                ]}
+              >
                 Knowledge Spotlight
               </Text>
 
@@ -202,4 +229,33 @@ const styles = StyleSheet.create({
   emptyState: { fontStyle: "italic", opacity: 0.7 },
   feedbackRow: { flexDirection: "row", alignItems: "center", marginVertical: 10 },
   feedbackText: { marginLeft: 10 },
+
+  /* NEW STYLES */
+  noResultBox: {
+    marginTop: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    backgroundColor: "#f1f5f9",
+    borderRadius: 12,
+  },
+  noResultImage: {
+    width: 120,
+    height: 120,
+    marginBottom: 12,
+  },
+  noResultTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1e293b",
+    marginBottom: 6,
+    textAlign: "center",
+  },
+  noResultSubtitle: {
+    fontSize: 14,
+    color: "#475569",
+    textAlign: "center",
+    marginHorizontal: 10,
+  },
 });
