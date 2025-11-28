@@ -1,80 +1,36 @@
-import { useEffect, useState } from 'react';
-import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-
-import { useColorScheme } from '@/components/useColorScheme';
-import { CuratedTopic } from '@/constants/topics';
+import { useColorScheme } from "@/components/useColorScheme";
+import { CuratedTopic } from "@/constants/topics";
+import { router } from "expo-router";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { getImage } from "../utils/imageMap";
 
 interface FeaturedTopicCardProps {
-  topic: CuratedTopic;
+  topic: CuratedTopic & { slug: string };
   onPress?: () => void;
 }
 
-const FALLBACK_IMAGE =
-  'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Globe_icon.svg/512px-Globe_icon.svg.png';
-
 export function FeaturedTopicCard({ topic, onPress }: FeaturedTopicCardProps) {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const [imageError, setImageError] = useState(false);
-  const [imageUri, setImageUri] = useState(topic.image);
+  const isDark = colorScheme === "dark";
 
-  useEffect(() => {
-    // Log the image URL being requested to help diagnose 404s on deployed sites
-    try {
-      // Only log on web to avoid noisy native logs
-      if (Platform.OS === 'web') {
-        console.debug(`[FeaturedTopicCard] requesting image for "${topic.title}":`, imageUri);
-      }
-    } catch (e) {
-      // ignore logging failures
-    }
-  }, [imageUri, topic.title]);
+  const imageSource = getImage(topic.slug, "featured");
 
-  const handleImageError = (event?: any) => {
-    if (!imageError) {
-      setImageError(true);
-      // Log more details when an image fails to load so user can paste them here
-      try {
-        if (Platform.OS === 'web') {
-          console.warn('[FeaturedTopicCard] image failed to load for', topic.title, {
-            attempted: imageUri,
-            event: event?.nativeEvent ?? event,
-          });
-        }
-      } catch (e) {
-        // ignore
-      }
-
-      setImageUri(FALLBACK_IMAGE);
-    }
+  const handlePress = () => {
+    if (onPress) onPress();
+    else router.push(`/article/${topic.slug}`);
   };
 
   return (
     <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Open article about ${topic.title}`}
-      onPress={onPress}
+      onPress={handlePress}
       style={[styles.card, isDark ? styles.cardDark : styles.cardLight]}
     >
-      <Image
-        source={{ uri: imageUri }}
-        style={styles.image}
-        resizeMode="cover"
-        onError={handleImageError}
-        onLoad={() => {
-          // Image loaded successfully
-        }}
-      />
+      <Image source={imageSource} style={styles.image} resizeMode="cover" />
+
       <View style={styles.overlay}>
         <Text style={styles.category}>{topic.category.toUpperCase()}</Text>
         <Text style={styles.title} numberOfLines={2}>
           {topic.title}
-        </Text>
-        <Text style={styles.subtitle} numberOfLines={2}>
-          {topic.subtitle}
-        </Text>
-        <Text style={styles.summary} numberOfLines={3}>
-          {topic.summary}
         </Text>
       </View>
     </Pressable>
@@ -83,64 +39,35 @@ export function FeaturedTopicCard({ topic, onPress }: FeaturedTopicCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    width: 280,
+    width: 260,
     height: 320,
-    borderRadius: 32,
-    overflow: 'hidden',
+    borderRadius: 24,
+    overflow: "hidden",
     marginRight: 16,
-    ...Platform.select({
-      web: {
-        cursor: 'pointer',
-        transitionProperty: 'transform, box-shadow',
-        transitionDuration: '200ms',
-      },
-    }),
   },
-  cardLight: {
-    backgroundColor: '#0f172a',
-  },
-  cardDark: {
-    backgroundColor: '#020617',
-  },
+  cardLight: { backgroundColor: "#0f172a" },
+  cardDark: { backgroundColor: "#020617" },
+
   image: {
-    ...StyleSheet.absoluteFillObject,
-    minHeight: 320,
-    backgroundColor: '#1f2937',
-    ...Platform.select({
-      web: {
-        objectFit: 'cover',
-        width: '100%',
-        height: '100%',
-      },
-    }),
+    width: "100%",
+    height: "60%",
+    backgroundColor: "#1e293b",
   },
+
   overlay: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    padding: 14,
+    justifyContent: "flex-end",
   },
   category: {
-    color: '#bfdbfe',
-    fontSize: 13,
-    letterSpacing: 1,
-    marginBottom: 6,
-    fontWeight: '700',
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontWeight: '700',
+    color: "#38bdf8",
+    fontSize: 11,
+    fontWeight: "700",
     marginBottom: 4,
   },
-  subtitle: {
-    color: '#e2e8f0',
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  summary: {
-    color: '#cbd5f5',
-    fontSize: 13,
-    lineHeight: 18,
+  title: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "700",
+    lineHeight: 22,
   },
 });

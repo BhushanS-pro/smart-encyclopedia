@@ -1,4 +1,3 @@
-import DummyAd from "@/components/DummyAd";
 import { useColorScheme } from "@/components/useColorScheme";
 import { useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text } from "react-native";
@@ -23,7 +22,7 @@ export default function ScienceCategory() {
       </Text>
 
       {/* Ad Below Intro */}
-      <DummyAd size="banner" adUnitId="science-banner-1" useRealAds={true} />
+
 
       <Text
         style={styles.link}

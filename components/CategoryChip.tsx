@@ -1,16 +1,17 @@
+import { useColorScheme } from '@/components/useColorScheme';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { useColorScheme } from '@/components/useColorScheme';
-
 interface CategoryChipProps {
-  label: string;
+  label?: string; // made optional to avoid crashes
   isActive?: boolean;
   onPress?: () => void;
 }
 
-export function CategoryChip({ label, isActive = false, onPress }: CategoryChipProps) {
+export function CategoryChip({ label = "Unknown", isActive = false, onPress }: CategoryChipProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+
+  const formattedLabel = label?.toString()?.trim() || "Unknown";
 
   return (
     <Pressable
@@ -30,7 +31,7 @@ export function CategoryChip({ label, isActive = false, onPress }: CategoryChipP
           isActive ? styles.labelActive : null,
         ]}
       >
-        {label}
+        {formattedLabel.toUpperCase()}
       </Text>
     </Pressable>
   );
@@ -38,30 +39,35 @@ export function CategoryChip({ label, isActive = false, onPress }: CategoryChipP
 
 const styles = StyleSheet.create({
   chip: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     paddingVertical: 10,
-    borderRadius: 24,
+    borderRadius: 30,
     marginRight: 12,
     marginBottom: 12,
+    borderWidth: 1,
   },
   chipLight: {
-    backgroundColor: '#e2e8f0',
+    backgroundColor: '#eef2ff',
+    borderColor: '#cbd5e1',
   },
   chipDark: {
-    backgroundColor: '#1f2937',
+    backgroundColor: '#1e293b',
+    borderColor: '#334155',
   },
   chipActive: {
     backgroundColor: '#2563eb',
+    borderColor: '#1e40af',
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   labelLight: {
-    color: '#1f2937',
+    color: '#1e293b',
   },
   labelDark: {
-    color: '#f8fafc',
+    color: '#f1f5f9',
   },
   labelActive: {
     color: '#ffffff',

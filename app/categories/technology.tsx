@@ -1,4 +1,3 @@
-import DummyAd from "@/components/DummyAd";
 import { useColorScheme } from "@/components/useColorScheme";
 import { useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text } from "react-native";
@@ -21,7 +20,6 @@ export default function TechnologyCategory() {
         and digital communication systems.
       </Text>
 
-      <DummyAd size="banner" adUnitId="tech-banner-1" useRealAds={true} />
 
       <Text style={styles.link} onPress={() => router.push("/article/Artificial%20Intelligence")}>
         Artificial Intelligence →

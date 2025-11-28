@@ -1,4 +1,3 @@
-import DummyAd from "@/components/DummyAd";
 import { useColorScheme } from "@/components/useColorScheme";
 import { useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text } from "react-native";
@@ -21,7 +20,6 @@ export default function BiologyCategory() {
         to large ecosystems. Explore how life evolves, adapts, and survives on Earth.
       </Text>
 
-      <DummyAd size="banner" adUnitId="biology-banner-1" useRealAds={true} />
 
       <Text style={styles.link} onPress={() => router.push("/article/Evolution")}>
         Evolution →

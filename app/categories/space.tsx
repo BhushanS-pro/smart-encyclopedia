@@ -1,4 +1,3 @@
-import DummyAd from "@/components/DummyAd";
 import { useColorScheme } from "@/components/useColorScheme";
 import { useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text } from "react-native";
@@ -21,7 +20,6 @@ export default function SpaceCategory() {
         to black holes and space exploration missions.
       </Text>
 
-      <DummyAd size="banner" adUnitId="space-banner-1" useRealAds={true} />
 
       <Text style={styles.link} onPress={() => router.push("/article/Milky%20Way")}>
         Milky Way →

@@ -1,4 +1,3 @@
-import DummyAd from "@/components/DummyAd";
 import { useColorScheme } from "@/components/useColorScheme";
 import { useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text } from "react-native";
@@ -20,8 +19,6 @@ export default function HistoryCategory() {
         History allows us to study past civilizations, cultures, and events that 
         shaped the modern world. Explore significant eras and historical figures.
       </Text>
-
-      <DummyAd size="banner" adUnitId="history-banner-1" useRealAds={true} />
 
       <Text style={styles.link} onPress={() => router.push("/article/World%20War%202")}>
         World War II →

@@ -32,9 +32,8 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "config": {
-        "googleMobileAdsAppId": "ca-app-pub-3940256099942544~3347511713"
       },
-      "package": "com.bhushanbhuvan.SmartEncyclopedia"
+      "package": "com.sam.SmartEncyclopedia"
     },
     "web": {
       "bundler": "metro",

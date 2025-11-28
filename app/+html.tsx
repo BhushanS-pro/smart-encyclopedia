@@ -4,46 +4,54 @@ export default function Root({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        {/* Required First */}
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
 
-        {/* Mobile responsive meta */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        {/* Mobile Viewport */}
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
 
-        {/* SEO Meta */}
+        {/* Canonical URL */}
         <link rel="canonical" href="https://smartencyclopedia.uk" />
 
+        {/* SEO Meta */}
         <meta
           name="description"
-          content="Smart Encyclopedia: AI-powered knowledge search across science, history, space, technology, biology & more."
+          content="Smart Encyclopedia: Explore original, high-quality knowledge across science, space, technology, history & more."
         />
         <meta
           name="keywords"
-          content="encyclopedia, science facts, space, knowledge, history, biology, technology, learning, AI encyclopedia"
+          content="encyclopedia, learning, facts, articles, science, space, technology, biology, history"
         />
-
+        <meta name="author" content="Smart Encyclopedia" />
         <meta name="theme-color" content="#ffffff" />
 
-        {/* OG Social Sharing */}
+        {/* Open Graph (Social Preview) */}
         <meta property="og:title" content="Smart Encyclopedia" />
         <meta
           property="og:description"
-          content="Explore facts, history, science, technology, biology and more using AI-powered knowledge search."
+          content="A modern encyclopedia with high-quality original articles."
         />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://smartencyclopedia.uk" />
-        <meta property="og:image" content="https://smartencyclopedia.uk/preview.png" />
+        <meta
+          property="og:image"
+          content="https://smartencyclopedia.uk/preview.png"
+        />
 
-        {/* Twitter Meta */}
+        {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Smart Encyclopedia" />
         <meta
           name="twitter:description"
-          content="A modern AI-powered encyclopedia for fast learning and research."
+          content="Explore factual, researched and human-written articles."
         />
         <meta name="twitter:image" content="https://smartencyclopedia.uk/preview.png" />
 
-        {/* JSON-LD Structured Organization Schema (Required for Google) */}
+        {/* Schema.org Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -51,33 +59,34 @@ export default function Root({ children }: { children: React.ReactNode }) {
               "@context": "https://schema.org",
               "@type": "Organization",
               name: "Smart Encyclopedia",
+              legalName: "Smart Encyclopedia",
               url: "https://smartencyclopedia.uk",
               logo: "https://smartencyclopedia.uk/icon.png",
               sameAs: [
-                "https://www.instagram.com",
-                "https://x.com",
-                "https://facebook.com"
-              ]
+                "https://instagram.com/smartencyclopedia",
+                "https://x.com/smartencyclopedia",
+                "https://facebook.com/smartencyclopedia",
+              ],
             }),
           }}
         />
 
-        {/* Prevent layout flicker */}
+        {/* Prevent layout scroll jump */}
         <ScrollViewStyleReset />
 
-        {/* Background scheme (light/dark) */}
+        {/* System Theme Support */}
         <style
           dangerouslySetInnerHTML={{
             __html: `
-              body { background-color: #fff; }
+              body { background-color: #ffffff; margin: 0; }
               @media (prefers-color-scheme: dark) {
-                body { background-color: #000; }
+                body { background-color: #000000; }
               }
             `,
           }}
         />
 
-        {/* Google AdSense Script */}
+        {/* Google AdSense */}
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8947922622346274"
